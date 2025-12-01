@@ -238,10 +238,11 @@ export class LoansService {
     const newBalance = loan.remainingBalance.minus(actualAmount);
     const newStatus = newBalance.lte(0) ? 'PAID' : 'ACTIVE';
 
-    await this.prisma.loan.update({
+
+   await this.prisma.loan.update({
       where: { id: loanId },
       data: {
-        remainingBalance: newBalance.max(0),
+        remainingBalance: clampedBalance,
         status: newStatus,
         endDate: newStatus === 'PAID' ? new Date() : null,
       },
