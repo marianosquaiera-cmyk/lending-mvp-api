@@ -5,7 +5,7 @@ import { TiendanubeModule } from '../tiendanube/tiendanube.module';
 
 @Module({
   imports: [TiendanubeModule],
-  providers: [MerchantsService],
+  providers: [MerchantsService],[TiendanubeService],[AfipService],[BCRAService],[PrismaService],
   controllers: [MerchantsController],
   exports: [MerchantsService],
 })
