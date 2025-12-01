@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// MERCHANT (Comercio)
+// ============================================================================
+
+model Merchant {
+  id                  String    @id @default(cuid())
+  cuit                String    @unique
+  businessName        String?
+  brandName           String?
+  email               String    @unique
+  phone               String
+  cbu                 String
+
+  tiendanubeId        String?   @unique
+  tiendanubeToken     String?   @db.Text
+
+  sixMonthRevenue     Decimal?  @db.Decimal(15, 2)
+  monthlyRevenue      Decimal?  @db.Decimal(15, 2)
+  dailyRevenue        Decimal?  @db.Decimal(15, 2)
+  lastSalesSync       DateTime?
+
+  status              String    @default("pending")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  loans               Loan[]
+  riskProfiles        RiskProfile[]
+  dailySales          DailySales[]
+
+  @@index([status])
+  @@index([tiendanubeId])
+}
+
+// ============================================================================
+// LOAN (Préstamo)
+// ============================================================================
+
+model Loan {
+  id                  String    @id @default(cuid())
+  merchantId          String
+  merchant            Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  capitalAmount       Decimal   @db.Decimal(15, 2)
+  totalToRepay        Decimal   @db.Decimal(15, 2)
+  remainingBalance    Decimal   @db.Decimal(15, 2)
+
+  annualNominalRate   Decimal   @default(0.80) @db.Decimal(5, 4)
+  periodRate          Decimal   @db.Decimal(5, 4)
+  dailyPercentage     Decimal   @db.Decimal(5, 4)
+
+  planDays            Int
+
+  status              String    @default("PENDING")
+  startDate           DateTime?
+  endDate             DateTime?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  payments            Payment[]
+
+  @@index([merchantId])
+  @@index([status])
+}
+
+// ============================================================================
+// PAYMENT (Pagos Diarios)
+// ============================================================================
+
+model Payment {
+  id                  String    @id @default(cuid())
+  loanId              String
+  loan                Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  date                DateTime
+
+  amount              Decimal   @db.Decimal(15, 2)
+  autoAmount          Decimal   @db.Decimal(15, 2)
+  manualAmount        Decimal   @db.Decimal(15, 2)
+
+  reference           String?
+
+  createdAt           DateTime  @default(now())
+
+  @@unique([loanId, date])
+  @@index([loanId])
+  @@index([date])
+}
+
+// ============================================================================
+// DAILY SALES (Ventas Diarias)
+// ============================================================================
+
+model DailySales {
+  id                  String    @id @default(cuid())
+  merchantId          String
+  merchant            Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  date                DateTime
+  grossAmount         Decimal   @db.Decimal(15, 2)
+  ordersCount         Int?
+
+  source              String    @default("tiendanube")
+
+  createdAt           DateTime  @default(now())
+
+  @@unique([merchantId, date])
+  @@index([merchantId])
+  @@index([date])
+}
+
+// ============================================================================
+// RISK PROFILE (Perfiles de Riesgo)
+// ============================================================================
+
+model RiskProfile {
+  id                  String    @id @default(cuid())
+  merchantId          String
+  merchant            Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  source              String
+  score               Int?
+  rawData             Json?
+
+  lastUpdated         DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+
+  @@unique([merchantId, source])
+  @@index([merchantId])
+  @@index([source])
+}
+
+// ============================================================================
+// USERS (Admin, para futura expansión)
+// ============================================================================
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  password            String    @db.Text
+
+  role                String    @default("viewer")
+
+  lastLoginAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// ============================================================================
+// AUDIT LOG (Auditoría)
+// ============================================================================
+
+model AuditLog {
+  id                  String    @id @default(cuid())
+  action              String
+  merchantId          String?
+  userId              String?
+
+  details             Json?
+
+  createdAt           DateTime  @default(now())
+
+  @@index([merchantId])
+  @@index([action])
+}
