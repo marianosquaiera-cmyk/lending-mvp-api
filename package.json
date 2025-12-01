@@ -19,7 +19,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^3.0.0",
     "@nestjs/config": "^3.0.0",
-    "@prisma/client": "5.18.0
+    "@prisma/client": "^5.18.0,
     "reflect-metadata": "^0.1.13",
     "rimraf": "^5.0.0",
     "rxjs": "^7.0.0",
