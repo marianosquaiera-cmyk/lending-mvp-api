@@ -197,10 +197,12 @@ export class LoansService {
       throw new BadRequestException('Amount must be positive');
     }
 
+    // Clampear al saldo restante
     const actualAmount = amount.greaterThan(loan.remainingBalance)
       ? loan.remainingBalance
       : amount;
 
+    // Crear pago manual
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -214,6 +216,7 @@ export class LoansService {
     });
 
     if (payment) {
+      // Sumar al pago existente del día
       payment = await this.prisma.payment.update({
         where: { id: payment.id },
         data: {
@@ -223,6 +226,7 @@ export class LoansService {
         },
       });
     } else {
+      // Crear nuevo pago
       payment = await this.prisma.payment.create({
         data: {
           loanId,
@@ -235,11 +239,16 @@ export class LoansService {
       });
     }
 
+    // Actualizar saldo del préstamo
     const newBalance = loan.remainingBalance.minus(actualAmount);
     const newStatus = newBalance.lte(0) ? 'PAID' : 'ACTIVE';
 
+    // Si queda negativo por redondeos, clampeamos a 0
+    const clampedBalance = newBalance.lessThan(0)
+      ? new Decimal(0)
+      : newBalance;
 
-   await this.prisma.loan.update({
+    await this.prisma.loan.update({
       where: { id: loanId },
       data: {
         remainingBalance: clampedBalance,
@@ -248,6 +257,7 @@ export class LoansService {
       },
     });
 
+    // Auditoría
     await this.prisma.auditLog.create({
       data: {
         action: 'manual_payment',
