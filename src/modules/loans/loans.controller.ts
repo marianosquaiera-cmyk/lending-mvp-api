@@ -10,7 +10,7 @@ export class LoansController {
   constructor(private loansService: LoansService) {}
 
   @Get('pre-offer')
-  async getPreOffer(@CurrentUser() user: any) {
+  async getPreOffer(@CurrentUser() user: any):Promise<any> {
     return this.loansService.getPreOffer(user.merchantId);
   }
 
