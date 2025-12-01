@@ -1,19 +1,14 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { TiendanubeService } from '../tiendanube/tiendanube.service';
-import { AfipService } from '../tiendanube/afip.service';
-import { BcraService } from '../tiendanube/bcra.service';
 
 @Injectable()
 export class MerchantsService {
   private readonly logger = new Logger(MerchantsService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private tiendanubeService: TiendanubeService,
-    private afipService: AfipService,
-    private bcraService: BcraService,
-  ) {}
+  private prisma: PrismaService,
+) {}
 
   async registerMerchant(data: {
     cuit: string;
@@ -43,9 +38,9 @@ export class MerchantsService {
       },
     });
 
-    this.analyzeRiskProfile(merchant.id).catch((err) =>
-      this.logger.error(`Risk analysis failed for ${merchant.id}`, err),
-    );
+  private async analyzeRiskProfile(merchantId: string) {
+
+  }
 
     return merchant;
   }
